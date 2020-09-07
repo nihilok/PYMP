@@ -9,20 +9,20 @@ import time
 test_url = 'https://www.youtube.com/watch?v=YgGzAKP_HuM'
 
 
+# class MyLogger(qtc.QRunnable):
+#     status = qtc.pyqtSignal(str)
+#     def run(self):
+#         pass
 
-
-
-# class MyLogger(object):
 #     def debug(self, msg):
-#         status = msg
-#         mw.statusBar().showMessage(status)
+#         self.status.emit(msg)
 #         # pass
 
 #     def warning(self, msg):
 #         pass
 
 #     def error(self, msg):
-#         mw.statusBar().showMessage(msg)
+#         self.status.emit(msg)
 #         # pass
 
 
@@ -51,14 +51,19 @@ class MainWindow(qtw.QMainWindow):
         help_menu.addAction('About')
         self.statusBar().showMessage('Ready')
 
+        # self.threadpool = qtc.QThreadPool()
+        # print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
         self.show()
 
-    def change_status(self, msg, time):
-        self.statusBar().showMessage(msg, time)
+    @qtc.pyqtSlot()
+    def change_status(self, msg):
+        self.statusBar().showMessage(msg)
 
 
 class MainWidget(qtw.QWidget):
     radio = ''
+    status_signal = qtc.pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -78,6 +83,7 @@ class MainWidget(qtw.QWidget):
         self.mp3_radio.toggled.connect(self.FormatSelector)
         self.mp4_radio = qtw.QRadioButton('MP4')
         self.mp4_radio.toggled.connect(self.FormatSelector)
+        self.status_signal.connect(MainWindow.change_status)
 
         container.layout().addWidget(label, 0,0,1,3)
         container.layout().addWidget(self.paste_field,1,0,1,5)
@@ -94,18 +100,20 @@ class MainWidget(qtw.QWidget):
             self.radio = radioBtn.text()
 
             if self.radio == 'MP3':
-                mw.change_status('MP3 selected', 2000)
+                mw.change_status('MP3 selected')
 
             elif self.radio == 'MP4':
-                mw.change_status('MP4 selected', 2000)
+                mw.change_status('MP4 selected')
 
-    
     def paster(self):
         self.url = self.paste_field.text()
         return self.url
 
 
+
     def download(self):
+        # worker = MyLogger()
+        # mw.threadpool.start(worker)
         ydl_opts_mp3 = {
                 'format': 'bestaudio/best',
                 'postprocessors': [{
@@ -123,27 +131,26 @@ class MainWidget(qtw.QWidget):
                 # 'progress_hooks': [my_hook],
             }
 
+        url = self.paster()
+        print(url)
+
         if self.radio == 'MP3':
             with youtube_dl.YoutubeDL(ydl_opts_mp3) as ydl:
                 try:
-                    ydl.download([self.paster()])
-                    mw.statusBar().showMessage('Ready')
+                    ydl.download([url])
+                    # mw.statusBar().showMessage('Ready')
+                    mw.change_status('Ready')
                 except:
-                    mw.change_status('Error', 3000)
+                    mw.change_status('Error')
                     
         elif self.radio == 'MP4':
-            mw.change_status('Starting Download...', 3000)
+            mw.change_status('Starting Download...')
             with youtube_dl.YoutubeDL(ydl_opts_mp4) as ydl:
                 try:
-                    ydl.download([self.paster()])
-                    mw.statusBar().showMessage('Ready')
+                    ydl.download([url])
+                    mw.change_status('Ready')
                 except:
-                    mw.change_status('Error', 3000)
-        # print(self.paste_field.text())
-
-
-
-
+                    mw.change_status('Error')
 
 
 if __name__ == '__main__':
