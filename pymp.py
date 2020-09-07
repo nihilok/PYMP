@@ -12,7 +12,7 @@ error = "Error!"
 help_text = 'Convert any video or playlist to MP3/MP4! Videos will download to the same directory as the executable. ' \
             'You can paste in another URL once conversion is complete. Longer videos will (obviously?) take longer ' \
             'to convert after downloading. Playlists will be downloaded and converted in sequence automatically. ' \
-            ' You can import bookmarks in json format to batch download MP3s. Enter the name of the file saved in '\
+            'You can import bookmarks in json format to batch download MP3s. Enter the name of the file saved in '\
             'the same directory e.g. "bookmarks.json" ' + '''
             
 Troubleshooting:
