@@ -1,5 +1,5 @@
 # PYMP
-experiments with youtube-dl (gui)
+experiments with building a GUI for youtube-dl
 
 latest version 0.5 includes:
 
