@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import tkinter as tk
 import youtube_dl
 import time
@@ -10,82 +9,48 @@ import re
 # test url (longer): https://www.youtube.com/watch?v=jrTMMG0zJyI
 
 welcome = "Welcome to pymp3 v0.3!"
-error = "Error! Did you paste the URL correctly?"
-help_text = '''Welcome to PYMP3! - Convert any video
-or playlist to MP3(s)! Videos will download to the
-same directory as the executable. You can paste in
-another track once conversion is complete. Longer
-videos will (obviously?) take longer to convert
-after downloading. Playlists will be downloaded
-and converted in sequence automatically, but the
-process will be interrupted if any of the videos
-is not available...
-
-
-Coming soon:
--batch convert bookmarks in json/html formats
--set download folder
--IDtagging
-
+error = "Error!"
+help_text = 'Convert any video or playlist to MP3/MP4! Videos will download to the same directory as the executable. ' \
+            'You can paste in another URL once conversion is complete. Longer videos will (obviously?) take longer ' \
+            'to convert after downloading. Playlists will be downloaded and converted in sequence automatically, but ' \
+            'the process will be interrupted if any of the videos is not available...' + '''
+            
+Troubleshooting:
+- Is FFmpeg installed?
+ubuntu - $ sudo apt install ffmpeg
+windows - google "install ffmpeg"
 
 bitcoin: bc1qrrpd7dzmcf2gcdpld986mjmr9tnz8a9dpae7pg'''
+disclaimer = "PYMP is intended solely for the temporary download of audio or video resources " \
+             "for their offline use in contexts such as education. The developers do not condone " \
+             "the illegal copying, distribution and/or otherwise profiting from " \
+             "the misuse of intellectual property."
 
 
-# youtube_dl settings:
+# youtube_dl console output:
 class MyLogger(object):
     def debug(self, msg):
-        status_logger.set(msg)
-
+        Pymp.status_bar.set(msg)
 
     def warning(self, msg):
         pass
 
     def error(self, msg):
-        var_1.set(error)
-        status_logger.set('Error! Try again!')
+        Pymp.status_bar.set(msg)
+        Pymp.var1.set(error)
         wait(1)
-        paste_another.set('')
+        Pymp.var2.set('')
 
 
+# hook: gui display
 def my_hook(d):
     if d['status'] == 'finished':
-        var_1.set("Download complete, converting to mp3...")
+        readout = "Download complete, now converting..."
+        Pymp.var1.set(readout)
     elif d['status'] == 'downloading':
-        status = ("Downloading...", d['_percent_str'])
-        var_1.set(status)
-
-ydl_opts = {
-    'progress_hooks': [my_hook],
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-    'logger': MyLogger(),
-}
-
-
-# Download function:
-def mp3down():
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        try:
-            ydl.download([app.return_text()])
-            wait(1)
-            paste_another.set('')
-            var_1.set(welcome)
-            wait(3)
-            status_logger.set('Ready')
-        except:
-            wait(5)
-            var_1.set(welcome)
-            status_logger.set('Ready')
-
-
-# Threading
-def refresh_threads():
-    t1 = threading.Thread(target=mp3down)
-    t1.start()
+        readout = ("Downloading...", d['_percent_str'])
+        Pymp.var1.set(readout)
+        Pymp.var2.set('')
 
 
 # json parsing:
@@ -97,88 +62,240 @@ def extract_urls(json_file):
     return youtube_links
 
 
+# wait function
 def wait(secs):
     time.sleep(secs)
 
 
-class Window1:
-    def __init__(self, master):
-        self.master = master
-        self.master.geometry('600x420')
-        self.master.title("pymp3 v0.3.1 (Run inside the directory you want to download to...)")
-        self.master.resizable(width=False, height=False)
-        # self.icon = tk.PhotoImage(file="mp3tub3.png")
-        # self.master.iconphoto(False, self.icon)
-        self.frame = tk.Frame(self.master, bg="red")
-        self.heading = tk.Label(self.frame, text='PYMP3', bg="red", fg="white", font=("Verdana 48 bold"), width='600')
-        self.heading.pack()
-        self.topframe = tk.Frame(self.frame, height='80', width='600', bg="gray")
-        self.topframe.pack()
-        self.middleframe = tk.Frame(self.frame, bg="black", width='600', height='50')
-        self.middleframe.pack()
-        self.bottomframe = tk.Frame(self.frame, bg="gray", width='600', height='150')
-        self.bottomframe.pack()
-        self.instruction = tk.Label(self.topframe, text="Paste video/playlist URL:", fg="green")
-        self.instruction.place(relx=0.1, rely=0.25, relheight=0.5, relwidth=0.3)
-        self.paste_field = tk.Entry(self.topframe, textvariable=paste_another, bg="white")
-        self.paste_field.place(relx=0.4, rely=0.25, relheight=0.5, relwidth=0.5)
-        self.download = tk.Button(self.bottomframe,
-                            text="Download MP3",
-                            fg="green",
-                            command=lambda: refresh_threads())
-        self.download.place(relx=0.1, rely=0.1, relheight=0.8, relwidth=0.8)
-        self.label = tk.Label(self.middleframe,
-                            textvariable=var_1,
-                            bg="black",
-                            fg="green")
-        self.label.place(relx=0, rely=0, relheight=1, relwidth=1)
-        self.new_button('Help', HelpWindow)
-        self.status = tk.Label(self.master, textvariable=status_logger, bd=1, relief="sunken", font='Verdana 8', anchor='w')
-        self.status.pack(side="bottom", fill='x')
-        self.frame.pack()
-
-    def new_button(self, text, _class):
-        tk.Button(self.frame, text=text, command=lambda: self.new_window(_class)).pack(pady=5)
-
-    def new_window(self, _class):
-        self.new = tk.Toplevel(self.master)
-        _class(self.new)
-
-    def set_text(self, text):
-        self.text = text
-        var_1.set(text)
-
-    def return_text(self):
-        return self.paste_field.get()
+LARGE_FONT = 'Verdana 14 bold'
+MEDIUM_FONT = 'Verdana 10'
+SMALL_FONT = 'Verdana 8 bold'
+title = 'PYMPv0.4'
+TITLE_FONT = 'Courier 54 bold'
 
 
-class HelpWindow:
-    def __init__(self, master):
-        self.master = master
-        self.master.geometry('450x400')
-        self.master.title('Help')
-        self.frame = tk.Frame(self.master)
-        self.quit = tk.Button(self.frame, text=f"Close", command=self.close_window)
-        self.label = tk.Label(self.frame, text=help_text, font=('Verdana 10'))
-        self.label.pack(pady=20)
-        self.quit.pack(side="bottom")
-        self.frame.pack()
+class Pymp(tk.Tk):
+
+    var1 = None
+    var2 = None
+    url = None
+    status_bar = None
+
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
+        tk.Tk.wm_title(self, title)
+
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand="True")
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        str_var1 = tk.StringVar()
+        str_var2 = tk.StringVar()
+        str_var3 = tk.StringVar()
+        Pymp.var1 = str_var1
+        Pymp.var1.set('')
+        Pymp.var2 = str_var2
+        Pymp.var2.set('')
+        Pymp.status_bar = str_var3
+        Pymp.status_bar.set('Ready')
+
+        self.frames = {}
+
+        for F in (Disclaimer, MenuWindow, Pymp3, Pymp4):
+            frame = F(container, self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame(Disclaimer)
+
+    def show_frame(self, cont):
+
+        frame = self.frames[cont]
+        frame.tkraise()
 
 
-    def close_window(self):
-        self.master.destroy()
+class Disclaimer(tk.Frame):
+
+    def __init__(self, parent, controller):
+        disclaimer_label = tk.StringVar()
+        disclaimer_label.set(disclaimer)
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Disclaimer:", font=LARGE_FONT)
+        label.pack(pady=20, padx=10)
+        label2 = tk.Label(self, textvariable=disclaimer_label, font=MEDIUM_FONT,
+                          width=60, wraplength=400, anchor='center', justify='center')
+        label2.pack(pady=40, padx=10)
+
+        button_frame = tk.Frame(self, height=100)
+        button_frame.pack(side="bottom", pady=10, fill='x')
+
+        button1 = tk.Button(button_frame, text="OK!", anchor='s',
+                            command=lambda: controller.show_frame(MenuWindow))
+        button1.pack(padx=10)
 
 
-root = tk.Tk()
+class MenuWindow(tk.Frame):
+        
+    def __init__(self, parent, controller):
 
-var_1 = tk.StringVar()
-var_1.set("Welcome to pymp3!")
+        tk.Frame.__init__(self, parent)
+        label = tk.Label(self, text="Welcome to PYMP!", font=LARGE_FONT)
+        label.pack(pady=10, padx=10)
+        label2 = tk.Label(self, text=help_text, font=SMALL_FONT, justify='left', wraplength=400)
+        label2.pack()
 
-paste_another = tk.StringVar()
-paste_another.set("")
+        status = tk.Label(self, textvariable=Pymp.status_bar, bd=1, relief="sunken",
+                          font='Verdana 8', height=1, anchor='sw')
+        status.pack(side="bottom", fill='x')
 
-status_logger = tk.StringVar()
-status_logger.set("Ready")
+        button_frame = tk.Frame(self, height=100)
+        button_frame.pack(side='bottom', pady=5, fill='x')
+        button1 = tk.Button(button_frame, text="PYMP3", anchor='s',
+                            command=lambda: controller.show_frame(Pymp3))
+        button1.pack(side='left', padx=49)
+        button2 = tk.Button(button_frame, text="PYMP4", anchor='s',
+                            command=lambda: controller.show_frame(Pymp4))
+        button2.pack(side='right', padx=49)
 
-app = Window1(root)
-root.mainloop()
+
+class Pymp3(tk.Frame):
+    url = None
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        titleframe = tk.Frame(self, bg='red', height=70, width=500)
+        titleframe.pack(fill='x')
+        titlelabel = tk.Label(titleframe, text="PYMP3", fg='white', bg='red', font=TITLE_FONT)
+        titlelabel.place(relx=0.1, rely=0.1, relheight=1.1, relwidth=0.8)
+        topframe = tk.Frame(self, bg="gray", height=60, width=500)
+        topframe.pack(fill='x')
+        instruction = tk.Label(topframe, text="Paste URL here:", fg="green")
+        instruction.place(relx=0.1, rely=0.15, relheight=0.7, relwidth=0.3)
+        self.paste_field = tk.Entry(topframe, bg="white", text=Pymp.var2)
+        self.paste_field.place(relx=0.4, rely=0.15, relheight=0.7, relwidth=0.5)
+        middleframe = tk.Frame(self, bg="gray", height=40)
+        middleframe.pack(fill='x')
+        label = tk.Label(middleframe, textvariable=Pymp.var1, bg="black", fg="green")
+        label.place(relx=0.1, rely=0, relheight=1, relwidth=0.8)
+        bottomframe = tk.Frame(self, bg="gray", height=100)
+        bottomframe.pack(fill='x')
+        button3 = tk.Button(bottomframe, text="Download MP3!", fg='green',
+                            command=lambda: self.refresh_threads())
+        button3.place(relx=0.1, rely=0.1, relheight=0.8, relwidth=0.8)
+
+        status = tk.Label(self, textvariable=Pymp.status_bar, bd=1, relief="sunken",
+                          font='Verdana 8', height=1, anchor='sw')
+        status.pack(side="bottom", fill='x')
+        button_frame = tk.Frame(self, height=100)
+        button_frame.pack(pady=5, fill='x')
+        button1 = tk.Button(button_frame, text="Home", anchor='s',
+                            command=lambda: controller.show_frame(MenuWindow))
+        button1.pack(side='left', padx=49)
+        button2 = tk.Button(button_frame, text="PYMP4", anchor='s',
+                            command=lambda: controller.show_frame(Pymp4))
+        button2.pack(side='right', padx=49)
+
+    def copy_url(self):
+        self.url = self.paste_field.get()
+        return self.url
+    
+    def download(self):
+        ydl_options = {
+                        'format': 'bestaudio/best',
+                        'postprocessors': [{
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '192',
+                        }],
+                        'logger': MyLogger(),
+                        'progress_hooks': [my_hook],
+                        }
+        with youtube_dl.YoutubeDL(ydl_options) as ydl:
+            ydl.add_default_info_extractors()
+            # ydl.add_progress_hook(self.hook)
+            try:
+                ydl.download([self.copy_url()])
+                Pymp.var1.set('Ready')
+                wait(1)
+                Pymp.status_bar.set('Ready')
+            except:
+                Pymp.var1.set(error)
+
+
+    def refresh_threads(self):
+        self.t1 = threading.Thread(target=self.download)
+        self.t1.start()
+
+
+class Pymp4(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        titleframe = tk.Frame(self, bg='green', height=70, width=500)
+        titleframe.pack(fill='x')
+        titlelabel = tk.Label(titleframe, text="PYMP4", fg='white', bg='green', font=TITLE_FONT)
+        titlelabel.place(relx=0.1, rely=0.1, relheight=1.1, relwidth=0.8)
+        topframe = tk.Frame(self, bg="gray", height=60, width=500)
+        topframe.pack(fill='x')
+        instruction = tk.Label(topframe, text="Paste URL here:", fg="green")
+        instruction.place(relx=0.1, rely=0.15, relheight=0.7, relwidth=0.3)
+        self.paste_field = tk.Entry(topframe, bg="white", text=Pymp.var2)
+        self.paste_field.place(relx=0.4, rely=0.15, relheight=0.7, relwidth=0.5)
+        middleframe = tk.Frame(self, bg="gray", height=40)
+        middleframe.pack(fill='x')
+        label = tk.Label(middleframe, textvariable=Pymp.var1, bg="black", fg="green")
+        label.place(relx=0.1, rely=0, relheight=1, relwidth=0.8)
+        bottomframe = tk.Frame(self, bg="gray", height=100)
+        bottomframe.pack(fill='x')
+        button3 = tk.Button(bottomframe, text="Download MP4!", fg='green',
+                            command=lambda: self.refresh_threads())
+        button3.place(relx=0.1, rely=0.1, relheight=0.8, relwidth=0.8)
+
+        status = tk.Label(self, textvariable=Pymp.status_bar, bd=1, relief="sunken",
+        				  font='Verdana 8', height=1, anchor='sw')
+        status.pack(side="bottom", fill='x')
+        button_frame = tk.Frame(self, height=100)
+        button_frame.pack(pady=5, fill='x')
+        button1 = tk.Button(button_frame, text="Home", anchor='s',
+                            command=lambda: controller.show_frame(MenuWindow))
+        button1.pack(side='left', padx=49)
+        button2 = tk.Button(button_frame, text="PYMP3", anchor='s',
+                            command=lambda: controller.show_frame(Pymp3))
+        button2.pack(side='right', padx=49)
+
+    def copy_url(self):
+        self.url = self.paste_field.get()
+        return self.url
+
+    def download(self):
+        ydl_options = {
+            'format': 'best[ext=mp4]',
+            'logger': MyLogger(),
+            'progress_hooks': [my_hook],
+        }
+        with youtube_dl.YoutubeDL(ydl_options) as ydl:
+            ydl.add_default_info_extractors()
+            # ydl.add_progress_hook(self.hook)
+            try:
+                ydl.download([self.copy_url()])
+                Pymp.var1.set('Ready')
+                wait(1)
+                Pymp.status_bar.set('Ready')
+            except:
+                Pymp.var1.set(error)
+
+    def refresh_threads(self):
+        self.t2 = threading.Thread(target=self.download)
+        self.t2.start()
+
+class batch_convert(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+
+
+
+app = Pymp()
+app.mainloop()
