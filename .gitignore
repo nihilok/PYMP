@@ -2,3 +2,7 @@ notes.txt
 PyQt-QWidget.py
 newui.py
 new.ui
+worker.py
+worker_template.py
+pympqt-old.py
+.idea/
